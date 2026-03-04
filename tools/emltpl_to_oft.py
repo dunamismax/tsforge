@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import email
 import email.policy
-import os
 import struct
 import sys
 import time
@@ -77,14 +76,14 @@ class _DirEntry:
     """A directory entry in the compound file."""
 
     __slots__ = (
-        "name",
-        "entry_type",
+        "child_sid",
+        "children",
         "clsid",
         "data",
-        "children",
+        "entry_type",
         "left_sid",
+        "name",
         "right_sid",
-        "child_sid",
         "start_sector",
         "stream_size",
     )
@@ -121,9 +120,7 @@ class CFBWriter:
         self._entries.append(_DirEntry("Root Entry", DIR_TYPE_ROOT, clsid))
         return idx
 
-    def add_storage(
-        self, parent: int, name: str, clsid: bytes = CLSID_NULL
-    ) -> int:
+    def add_storage(self, parent: int, name: str, clsid: bytes = CLSID_NULL) -> int:
         idx = len(self._entries)
         self._entries.append(_DirEntry(name, DIR_TYPE_STORAGE, clsid))
         self._entries[parent].children.append(idx)
@@ -203,10 +200,7 @@ class CFBWriter:
             n_mini_fat_sectors = 0
 
         # -- 5. allocate mini-stream (root entry data) ----------------------
-        if mini_stream:
-            mini_stream_start = _alloc_chain(bytes(mini_stream))
-        else:
-            mini_stream_start = ENDOFCHAIN
+        mini_stream_start = _alloc_chain(bytes(mini_stream)) if mini_stream else ENDOFCHAIN
 
         # -- 6. allocate regular data streams --------------------------------
         for idx in regular_entries:
@@ -221,10 +215,9 @@ class CFBWriter:
 
         # mark storages (no data of their own via regular sectors)
         for e in self._entries:
-            if e.entry_type in (DIR_TYPE_STORAGE, DIR_TYPE_ROOT):
-                if e is not root:
-                    e.start_sector = 0
-                    e.stream_size = 0
+            if e.entry_type in (DIR_TYPE_STORAGE, DIR_TYPE_ROOT) and e is not root:
+                e.start_sector = 0
+                e.stream_size = 0
 
         # -- 8. allocate FAT sectors ----------------------------------------
         n_data = len(sectors)
@@ -247,9 +240,7 @@ class CFBWriter:
         # write FAT data into the FAT sectors
         fat_raw = b"".join(struct.pack("<I", x) for x in fat[:total_slots])
         for i, sid in enumerate(fat_sids):
-            sectors[sid] = bytearray(
-                fat_raw[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE]
-            )
+            sectors[sid] = bytearray(fat_raw[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE])
 
         # -- 9. build balanced BST for directory tree -----------------------
         self._build_dir_trees()
@@ -261,9 +252,7 @@ class CFBWriter:
         # pad to fill all directory sectors
         dir_raw.extend(b"\x00" * (dir_bytes_needed - len(dir_raw)))
         for i in range(n_dir_sectors):
-            sectors[dir_start + i] = bytearray(
-                dir_raw[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE]
-            )
+            sectors[dir_start + i] = bytearray(dir_raw[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE])
 
         # -- 11. build header -----------------------------------------------
         header = self._build_header(
@@ -289,7 +278,7 @@ class CFBWriter:
 
     def _build_dir_trees(self) -> None:
         """Set left/right/child SIDs for balanced BSTs per storage."""
-        for i, e in enumerate(self._entries):
+        for _i, e in enumerate(self._entries):
             if e.entry_type not in (DIR_TYPE_ROOT, DIR_TYPE_STORAGE):
                 continue
             if not e.children:
@@ -382,8 +371,8 @@ class CFBWriter:
 # ============================================================================
 def _python_time_to_filetime(t: float) -> int:
     """Convert Unix timestamp to Windows FILETIME (100ns intervals since 1601-01-01)."""
-    EPOCH_DIFF = 11644473600  # seconds between 1601-01-01 and 1970-01-01
-    return int((t + EPOCH_DIFF) * 10_000_000)
+    epoch_diff = 11644473600  # seconds between 1601-01-01 and 1970-01-01
+    return int((t + epoch_diff) * 10_000_000)
 
 
 def _utf16le(text: str) -> bytes:
@@ -534,9 +523,7 @@ class OFTBuilder:
 
         # -- attachments ----------------------------------------------------
         for ai, att in enumerate(self.attachments):
-            att_stor = cfb.add_storage(
-                root, f"__attach_version1.0_#{ai:08X}"
-            )
+            att_stor = cfb.add_storage(root, f"__attach_version1.0_#{ai:08X}")
             ap = PropertyStreamBuilder(is_top_level=False)
 
             ap.add_int32(0x3705, 0x00000001)  # AttachMethod = BY_VALUE
@@ -610,7 +597,7 @@ def convert_emltpl(emltpl_path: str | Path, oft_path: str | Path) -> None:
 
         elif cd == "attachment" or (ct.startswith("image/") and part.get("Content-ID")):
             att: dict = {
-                "filename": part.get_filename() or f"attachment.bin",
+                "filename": part.get_filename() or "attachment.bin",
                 "mime_type": ct,
                 "data": payload,
                 "content_id": _strip_angle_brackets(part.get("Content-ID")),
