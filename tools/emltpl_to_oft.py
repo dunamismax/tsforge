@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run python
 """
 emltpl_to_oft.py - Convert macOS .emltpl email templates to Windows .oft format.
 
@@ -6,7 +6,7 @@ Creates valid OLE2 Compound File Binary (CFB) files following the MS-OXMSG
 specification for Outlook Template (.oft) files.
 
 Usage:
-    python3 emltpl_to_oft.py <input_dir_or_file> [output_dir]
+    uv run python emltpl_to_oft.py <input_dir_or_file> [output_dir]
 
     If output_dir is omitted, .oft files are placed alongside .emltpl files.
 

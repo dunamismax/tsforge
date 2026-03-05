@@ -15,7 +15,7 @@ lib/        Shared Python utilities (imported by tools/ scripts)
 Every script in `tools/` is standalone and directly runnable:
 
 ```bash
-python3 tools/<script>.py [args]
+uv run python tools/<script>.py [args]
 ```
 
 ## Tools
@@ -28,13 +28,13 @@ Builds valid OLE2 Compound File Binary (CFB) files from scratch following the [M
 
 ```bash
 # Convert all .emltpl files in a directory
-python3 tools/emltpl_to_oft.py /path/to/templates/
+uv run python tools/emltpl_to_oft.py /path/to/templates/
 
 # Convert to a specific output directory
-python3 tools/emltpl_to_oft.py /path/to/templates/ /path/to/output/
+uv run python tools/emltpl_to_oft.py /path/to/templates/ /path/to/output/
 
 # Convert a single file
-python3 tools/emltpl_to_oft.py /path/to/template.emltpl
+uv run python tools/emltpl_to_oft.py /path/to/template.emltpl
 ```
 
 ## Development
