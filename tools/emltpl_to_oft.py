@@ -37,7 +37,12 @@ MINI_STREAM_CUTOFF = 4096
 FREESECT = 0xFFFFFFFF
 ENDOFCHAIN = 0xFFFFFFFE
 FATSECT = 0xFFFFFFFD
+DIFSECT = 0xFFFFFFFC
 NOSTREAM = 0xFFFFFFFF
+
+FAT_ENTRIES_PER_SECTOR = SECTOR_SIZE // 4
+HEADER_DIFAT_ENTRIES = 109
+DIFAT_ENTRIES_PER_SECTOR = FAT_ENTRIES_PER_SECTOR - 1
 
 DIR_TYPE_UNKNOWN = 0
 DIR_TYPE_STORAGE = 1
@@ -220,10 +225,7 @@ class CFBWriter:
                 e.stream_size = 0
 
         # -- 8. allocate FAT sectors ----------------------------------------
-        n_data = len(sectors)
-        n_fat = 1
-        while n_fat * (SECTOR_SIZE // 4) < n_data + n_fat:
-            n_fat += 1
+        n_fat, n_difat = self._calculate_fat_layout(len(sectors))
 
         fat_sids: list[int] = []
         for _ in range(n_fat):
@@ -232,8 +234,15 @@ class CFBWriter:
             fat.append(FATSECT)
             fat_sids.append(sid)
 
+        difat_sids: list[int] = []
+        for _ in range(n_difat):
+            sid = len(sectors)
+            sectors.append(bytearray(SECTOR_SIZE))
+            fat.append(DIFSECT)
+            difat_sids.append(sid)
+
         # pad FAT entries to fill allocated FAT sectors
-        total_slots = n_fat * (SECTOR_SIZE // 4)
+        total_slots = n_fat * FAT_ENTRIES_PER_SECTOR
         while len(fat) < total_slots:
             fat.append(FREESECT)
 
@@ -241,6 +250,18 @@ class CFBWriter:
         fat_raw = b"".join(struct.pack("<I", x) for x in fat[:total_slots])
         for i, sid in enumerate(fat_sids):
             sectors[sid] = bytearray(fat_raw[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE])
+
+        # write DIFAT sectors when the FAT no longer fits in the header
+        for i, sid in enumerate(difat_sids):
+            difat_sector = bytearray(SECTOR_SIZE)
+            start = HEADER_DIFAT_ENTRIES + i * DIFAT_ENTRIES_PER_SECTOR
+            entries = fat_sids[start : start + DIFAT_ENTRIES_PER_SECTOR]
+            for j in range(DIFAT_ENTRIES_PER_SECTOR):
+                value = entries[j] if j < len(entries) else FREESECT
+                struct.pack_into("<I", difat_sector, j * 4, value)
+            next_sid = difat_sids[i + 1] if i + 1 < len(difat_sids) else ENDOFCHAIN
+            struct.pack_into("<I", difat_sector, SECTOR_SIZE - 4, next_sid)
+            sectors[sid] = difat_sector
 
         # -- 9. build balanced BST for directory tree -----------------------
         self._build_dir_trees()
@@ -261,6 +282,7 @@ class CFBWriter:
             mini_fat_start=mini_fat_start,
             n_mini_fat_sectors=n_mini_fat_sectors,
             fat_sids=fat_sids,
+            difat_sids=difat_sids,
         )
 
         # -- 12. write file --------------------------------------------------
@@ -291,6 +313,24 @@ class CFBWriter:
             )
             root = self._make_bst(kids, 0, len(kids) - 1)
             e.child_sid = root
+
+    @staticmethod
+    def _calculate_fat_layout(n_non_fat_sectors: int) -> tuple[int, int]:
+        """Return the FAT and DIFAT sector counts required by the CFB layout."""
+        n_fat = 0
+        n_difat = 0
+        while True:
+            total_sectors = n_non_fat_sectors + n_fat + n_difat
+            next_n_fat = (total_sectors + FAT_ENTRIES_PER_SECTOR - 1) // FAT_ENTRIES_PER_SECTOR
+            overflow = max(0, next_n_fat - HEADER_DIFAT_ENTRIES)
+            next_n_difat = (
+                (overflow + DIFAT_ENTRIES_PER_SECTOR - 1) // DIFAT_ENTRIES_PER_SECTOR
+                if overflow
+                else 0
+            )
+            if (next_n_fat, next_n_difat) == (n_fat, n_difat):
+                return next_n_fat, next_n_difat
+            n_fat, n_difat = next_n_fat, next_n_difat
 
     def _make_bst(self, kids: list[int], lo: int, hi: int) -> int:
         """Recursively build a balanced BST; return root dir-entry index."""
@@ -338,6 +378,7 @@ class CFBWriter:
         mini_fat_start: int,
         n_mini_fat_sectors: int,
         fat_sids: list[int],
+        difat_sids: list[int],
     ) -> bytes:
         buf = bytearray(SECTOR_SIZE)
         buf[0:8] = CFB_MAGIC
@@ -355,11 +396,12 @@ class CFBWriter:
         struct.pack_into("<I", buf, 0x38, MINI_STREAM_CUTOFF)
         struct.pack_into("<I", buf, 0x3C, mini_fat_start)
         struct.pack_into("<I", buf, 0x40, n_mini_fat_sectors)
-        struct.pack_into("<I", buf, 0x44, ENDOFCHAIN)  # first DIFAT sector
-        struct.pack_into("<I", buf, 0x48, 0)  # DIFAT sector count
+        first_difat_sector = difat_sids[0] if difat_sids else ENDOFCHAIN
+        struct.pack_into("<I", buf, 0x44, first_difat_sector)
+        struct.pack_into("<I", buf, 0x48, len(difat_sids))
 
         # DIFAT array in header (109 entries)
-        for i in range(109):
+        for i in range(HEADER_DIFAT_ENTRIES):
             val = fat_sids[i] if i < len(fat_sids) else FREESECT
             struct.pack_into("<I", buf, 0x4C + i * 4, val)
 
