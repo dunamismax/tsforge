@@ -6,11 +6,11 @@ Creates valid OLE2 Compound File Binary (CFB) files following the MS-OXMSG
 specification for Outlook Template (.oft) files.
 
 Usage:
-    uv run python emltpl_to_oft.py <input_dir_or_file> [output_dir]
+    uv run python tools/emltpl_to_oft.py <input_dir_or_file> [output_dir]
 
     If output_dir is omitted, .oft files are placed alongside .emltpl files.
 
-Dependencies: Python 3.10+ (stdlib only, no third-party packages)
+Dependencies: Python 3.12+ (stdlib only, no third-party packages)
 
 References:
     - [MS-CFB]   Compound File Binary File Format

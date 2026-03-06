@@ -18,7 +18,7 @@
 
 ## 3. Low severity
 
-- [ ] Align Python version and invocation docs
+- [x] Align Python version and invocation docs
 - [ ] Split parser, MAPI, CFB, and CLI concerns into separate modules
 
 # Verification snapshot
@@ -30,7 +30,8 @@
 - ISO-8859-1 smoke check confirmed body text stays `Olá\n` and `PidTagInternetCodepage=28591`
 - Regression suite now covers DIFAT overflow, charset preservation, and attachment stream round-tripping
 - Large regular streams now write from original buffers via `memoryview`-backed sector views instead of per-sector bytearray copies
+- Script docstring now matches the repo contract: `Python 3.12+` and `uv run python tools/emltpl_to_oft.py`
 
 # Immediate next pass priorities
 
-- Reconcile the script docstring, README, and project metadata on Python version and CLI invocation.
+- Split the converter into shared `lib/` modules with a thin standalone CLI entrypoint.
