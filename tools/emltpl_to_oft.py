@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import email
 import email.policy
+import encodings
 import struct
 import sys
 import time
@@ -72,6 +73,22 @@ PROP_RW = 0x00000006  # readable | writable
 # Message flags
 MSGFLAG_UNSENT = 0x00000008
 MSGFLAG_HASATTACH = 0x00000010
+
+DEFAULT_INTERNET_CODEPAGE = 65001
+
+CHARSET_CODEPAGES = {
+    "ascii": 20127,
+    "big5": 950,
+    "euc_jp": 20932,
+    "gb2312": 936,
+    "iso8859-1": 28591,
+    "iso8859-15": 28605,
+    "shift_jis": 932,
+    "utf-16": 1200,
+    "utf-16-be": 1201,
+    "utf-16-le": 1200,
+    "utf-8": 65001,
+}
 
 
 # ============================================================================
@@ -432,6 +449,38 @@ def _stream_name(prop_id: int, prop_type: int) -> str:
     return f"__substg1.0_{prop_id:04X}{prop_type:04X}"
 
 
+def _charset_to_codepage(charset: str | None) -> int | None:
+    """Map a MIME charset label to a Windows codepage identifier when possible."""
+    if not charset:
+        return None
+    try:
+        canonical = encodings.search_function(charset).name
+    except AttributeError:
+        canonical = None
+    if canonical is None:
+        canonical = charset.lower().replace("_", "-")
+
+    if canonical in CHARSET_CODEPAGES:
+        return CHARSET_CODEPAGES[canonical]
+    if canonical.startswith("cp") and canonical[2:].isdigit():
+        return int(canonical[2:])
+    return None
+
+
+def _decode_text_part(part: email.message.Message) -> str:
+    """Decode a text MIME part using the parser's charset-aware handling."""
+    content = part.get_content()
+    if isinstance(content, str):
+        return content
+
+    payload = part.get_payload(decode=True) or b""
+    charset = part.get_content_charset() or "utf-8"
+    try:
+        return payload.decode(charset)
+    except (LookupError, UnicodeDecodeError):
+        return payload.decode(charset, errors="replace")
+
+
 # ============================================================================
 # Property Stream Builder
 # ============================================================================
@@ -514,6 +563,7 @@ class OFTBuilder:
         self.subject: str = ""
         self.body_text: str = ""
         self.body_html: bytes = b""
+        self.internet_codepage = DEFAULT_INTERNET_CODEPAGE
         self.attachments: list[dict] = []
         # Each attachment: {"filename": str, "mime_type": str, "data": bytes,
         #                   "content_id": str | None, "disposition": str | None}
@@ -547,7 +597,7 @@ class OFTBuilder:
         props.add_string(0x0E1D, self.subject)  # NormalizedSubject
         props.add_int32(0x0E07, msg_flags)  # MessageFlags
         props.add_int32(0x340D, 0x00040E79)  # StoreSupportMask (UNICODE_OK)
-        props.add_int32(0x3FDE, 65001)  # InternetCodepage (UTF-8)
+        props.add_int32(0x3FDE, self.internet_codepage)  # InternetCodepage
         props.add_int32(0x3FF1, 0x0409)  # MessageLocaleId (en-US)
         props.add_time(0x3007, now_ft)  # CreationTime
         props.add_time(0x3008, now_ft)  # LastModificationTime
@@ -632,10 +682,16 @@ def convert_emltpl(emltpl_path: str | Path, oft_path: str | Path) -> None:
             continue
 
         if ct == "text/plain" and cd != "attachment":
-            builder.body_text = payload.decode("utf-8", errors="replace")
+            builder.body_text = _decode_text_part(part)
+            if codepage := _charset_to_codepage(part.get_content_charset()):
+                builder.internet_codepage = codepage
 
         elif ct == "text/html" and cd != "attachment":
             builder.body_html = payload  # raw bytes (usually UTF-8)
+            if not builder.body_text and (
+                codepage := _charset_to_codepage(part.get_content_charset())
+            ):
+                builder.internet_codepage = codepage
 
         elif cd == "attachment" or (ct.startswith("image/") and part.get("Content-ID")):
             att: dict = {

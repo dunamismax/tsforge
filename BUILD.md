@@ -9,7 +9,7 @@
 ## 1. High severity
 
 - [x] Fix CFB DIFAT emission for large FAT tables
-- [ ] Fix MIME charset handling and message codepage metadata
+- [x] Fix MIME charset handling and message codepage metadata
 
 ## 2. Medium severity
 
@@ -26,7 +26,8 @@
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .`
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff format --check .`
 - Large-file smoke check confirmed `n_fat=130` now emits `first_difat=16515` and `n_difat=1`
+- ISO-8859-1 smoke check confirmed body text stays `Olá\n` and `PidTagInternetCodepage=28591`
 
 # Immediate next pass priorities
 
-- Preserve MIME charset decoding and stop hard-coding UTF-8 metadata for non-UTF-8 bodies.
+- Add repeatable regression coverage around DIFAT emission and charset preservation.
