@@ -90,6 +90,8 @@ CHARSET_CODEPAGES = {
     "utf-8": 65001,
 }
 
+type Buffer = bytes | bytearray | memoryview
+
 
 # ============================================================================
 # CFB Writer -- builds OLE2 compound documents from scratch
@@ -120,13 +122,22 @@ class _DirEntry:
         self.name = name
         self.entry_type = entry_type
         self.clsid = clsid
-        self.data = data
+        self.data = memoryview(data)
         self.children: list[int] = []  # indices of child entries
         self.left_sid = NOSTREAM
         self.right_sid = NOSTREAM
         self.child_sid = NOSTREAM
         self.start_sector = ENDOFCHAIN
         self.stream_size = 0
+
+
+class _StreamSector:
+    """A regular sector backed by a slice of an existing stream buffer."""
+
+    __slots__ = ("data",)
+
+    def __init__(self, data: Buffer):
+        self.data = memoryview(data)
 
 
 class CFBWriter:
@@ -156,23 +167,23 @@ class CFBWriter:
         return idx
 
     def save(self, path: str | Path) -> None:
-        sectors: list[bytearray] = []
+        sectors: list[bytearray | _StreamSector] = []
         fat: list[int] = []
 
-        def _pad(data: bytes, boundary: int) -> bytes:
-            r = len(data) % boundary
-            return data + b"\x00" * (boundary - r) if r else data
+        def _pad(data: Buffer, boundary: int) -> bytes:
+            raw = bytes(data)
+            r = len(raw) % boundary
+            return raw + b"\x00" * (boundary - r) if r else raw
 
-        def _alloc_chain(data: bytes) -> int:
+        def _alloc_chain(data: Buffer) -> int:
             """Allocate sectors for *data*, return starting SID."""
             if not data:
                 return ENDOFCHAIN
             start = len(sectors)
             n = (len(data) + SECTOR_SIZE - 1) // SECTOR_SIZE
+            view = memoryview(data)
             for i in range(n):
-                chunk = data[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE]
-                chunk = chunk + b"\x00" * (SECTOR_SIZE - len(chunk))
-                sectors.append(bytearray(chunk))
+                sectors.append(_StreamSector(view[i * SECTOR_SIZE : (i + 1) * SECTOR_SIZE]))
                 fat.append(start + i + 1 if i < n - 1 else ENDOFCHAIN)
             return start
 
@@ -203,7 +214,7 @@ class CFBWriter:
             mini_stream.extend(padded)
 
         if mini_stream:
-            mini_stream = bytearray(_pad(bytes(mini_stream), SECTOR_SIZE))
+            mini_stream = bytearray(_pad(mini_stream, SECTOR_SIZE))
 
         # -- 3. allocate directory sectors (placeholder) --------------------
         n_dir_entries = len(self._entries)
@@ -222,7 +233,7 @@ class CFBWriter:
             n_mini_fat_sectors = 0
 
         # -- 5. allocate mini-stream (root entry data) ----------------------
-        mini_stream_start = _alloc_chain(bytes(mini_stream)) if mini_stream else ENDOFCHAIN
+        mini_stream_start = _alloc_chain(mini_stream) if mini_stream else ENDOFCHAIN
 
         # -- 6. allocate regular data streams --------------------------------
         for idx in regular_entries:
@@ -306,6 +317,12 @@ class CFBWriter:
         with open(path, "wb") as f:
             f.write(header)
             for s in sectors:
+                if isinstance(s, _StreamSector):
+                    f.write(s.data)
+                    padding = SECTOR_SIZE - len(s.data)
+                    if padding:
+                        f.write(b"\x00" * padding)
+                    continue
                 f.write(bytes(s))
 
     # -- internals -----------------------------------------------------------

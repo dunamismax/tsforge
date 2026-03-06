@@ -14,7 +14,7 @@
 ## 2. Medium severity
 
 - [x] Add regression tests for CFB/MAPI writer behavior
-- [ ] Reduce large-input memory copying during OFT generation
+- [x] Reduce large-input memory copying during OFT generation
 
 ## 3. Low severity
 
@@ -29,7 +29,8 @@
 - Large-file smoke check confirmed `n_fat=130` now emits `first_difat=16515` and `n_difat=1`
 - ISO-8859-1 smoke check confirmed body text stays `Olá\n` and `PidTagInternetCodepage=28591`
 - Regression suite now covers DIFAT overflow, charset preservation, and attachment stream round-tripping
+- Large regular streams now write from original buffers via `memoryview`-backed sector views instead of per-sector bytearray copies
 
 # Immediate next pass priorities
 
-- Remove avoidable full-size sector-buffer copies for large regular streams.
+- Reconcile the script docstring, README, and project metadata on Python version and CLI invocation.
