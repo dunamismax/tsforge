@@ -29,9 +29,9 @@ def main() -> None:
     if repo_root_str not in sys.path:
         sys.path.insert(0, repo_root_str)
 
-    from lib.emltpl_to_oft import main as run_main
+    from pyforge.emltpl_to_oft import main as run_main
 
-    run_main()
+    raise SystemExit(run_main())
 
 
 if __name__ == "__main__":

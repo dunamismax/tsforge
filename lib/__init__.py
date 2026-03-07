@@ -1,5 +1,9 @@
-"""Shared utilities for scripts in this repo.
+"""Legacy compatibility imports.
 
-Import from here when multiple tools need the same logic.
-Keep this lean — only extract to lib/ when duplication is real.
+New reusable code belongs in ``pyforge/``. ``lib`` remains only so older local
+imports keep working while the repo standardizes on the package namespace.
 """
+
+from pyforge import emltpl_to_oft
+
+__all__ = ["emltpl_to_oft"]

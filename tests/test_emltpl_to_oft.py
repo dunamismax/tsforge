@@ -6,7 +6,7 @@ import unittest
 from dataclasses import dataclass
 from pathlib import Path
 
-from lib import emltpl_to_oft as emltpl_to_oft_module
+from pyforge import emltpl_to_oft as emltpl_to_oft_module
 
 
 @dataclass(frozen=True)

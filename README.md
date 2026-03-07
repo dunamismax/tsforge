@@ -1,50 +1,57 @@
-# scripts
+# pyforge
 
-Reusable Python scripts and utilities.
+`pyforge` is a small Python tooling repo intended to grow over time.
 
-## Structure
+It is not a general-purpose framework, and it is not limited to one email conversion workflow either. The repo houses durable Python utilities, the reusable library code behind them, and a scratch area for one-off experiments that have not earned a permanent place yet.
 
+## Current scope
+
+Today the repo contains one production utility:
+
+- `tools/emltpl_to_oft.py`: converts macOS `.emltpl` email templates to Windows Outlook `.oft` files.
+
+The converter builds OLE2 Compound File Binary data directly and stays stdlib-only. Its reusable implementation lives under the `pyforge/` package so future tools can share code without turning the repo into a pile of standalone scripts.
+
+## Layout
+
+```text
+pyforge/    Reusable Python package code used by durable tools
+tools/      Stable runnable entrypoints
+tests/      Regression tests for reusable behavior and tool workflows
+scratch/    Temporary experiments and one-offs
+lib/        Legacy compatibility shim for older local imports
 ```
-tools/      Permanent, reusable scripts — the good stuff
-scratch/    One-offs, experiments, WIP — the messy workbench
-lib/        Shared Python utilities (imported by tools/ scripts)
-```
 
-## Usage
+## Running the current tool
 
-Every script in `tools/` is standalone and directly runnable:
+The existing in-repo entrypoint remains:
 
 ```bash
-uv run python tools/<script>.py [args]
+uv run python tools/emltpl_to_oft.py /path/to/template-or-directory [output_dir]
 ```
 
-## Tools
-
-### emltpl_to_oft.py
-
-Convert macOS `.emltpl` email templates to Windows Outlook `.oft` format.
-
-Builds valid OLE2 Compound File Binary (CFB) files from scratch following the [MS-OXMSG](https://learn.microsoft.com/en-us/openspecs/exchange_server_protocols/ms-oxmsg/) specification. Pure Python — no third-party dependencies.
+The package code is also directly runnable:
 
 ```bash
-# Convert all .emltpl files in a directory
-uv run python tools/emltpl_to_oft.py /path/to/templates/
-
-# Convert to a specific output directory
-uv run python tools/emltpl_to_oft.py /path/to/templates/ /path/to/output/
-
-# Convert a single file
-uv run python tools/emltpl_to_oft.py /path/to/template.emltpl
+uv run python -m pyforge.emltpl_to_oft /path/to/template-or-directory [output_dir]
 ```
 
 ## Development
 
-Requires Python 3.12+. Linting and formatting via [ruff](https://docs.astral.sh/ruff/):
+Requires Python 3.12+.
 
 ```bash
-ruff check .        # lint
-ruff format .       # format
+UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .
+UV_CACHE_DIR=/tmp/uv-cache uv run ruff format --check .
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m unittest discover -s tests
 ```
+
+## Working standard
+
+- Put reusable implementation in `pyforge/`.
+- Keep `tools/` thin and runnable.
+- Treat `scratch/` as disposable until code proves it should move up.
+- Add or extend tests when behavior becomes part of the repo contract.
 
 ## License
 
