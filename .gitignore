@@ -1,5 +1,4 @@
 node_modules/
-.pnpm-store/
 dist/
 build/
 .turbo/
@@ -11,9 +10,6 @@ __unconfig*
 coverage/
 *.log
 *.local
-
-# Bun
-bun.lockb
 
 # Environment
 .env

@@ -1,6 +1,6 @@
 # Build and verification notes
 
-This repo is now a pnpm workspace built around Bun, TypeScript, and TanStack Start.
+This repo is now a Bun workspace built around Bun, TypeScript, and TanStack Start.
 
 ## Current package contract
 
@@ -13,10 +13,10 @@ This repo is now a pnpm workspace built around Bun, TypeScript, and TanStack Sta
 ## Current verification commands
 
 ```bash
-pnpm test
-pnpm check
-pnpm build
-pnpm --filter @tsforge/db db:generate
+bun run test
+bun run check
+bun run build
+bun run db:generate
 ```
 
 ## Runtime expectations

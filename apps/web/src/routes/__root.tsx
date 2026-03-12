@@ -21,7 +21,7 @@ export const Route = createRootRouteWithContext<{
       {
         name: 'description',
         content:
-          'Convert macOS .emltpl templates into Outlook .oft artifacts with Bun, Effect, TanStack Start, Drizzle, and Better Auth.',
+          'Convert macOS .emltpl templates into Outlook .oft artifacts with Bun, TanStack Start, Drizzle, Zod, and Better Auth.',
       },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],

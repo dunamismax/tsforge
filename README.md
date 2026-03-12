@@ -7,7 +7,7 @@ the converter core.
 ## Stack
 
 - Runtime: Bun
-- Package manager / workspace: pnpm
+- Package manager / workspace: Bun
 - Language: TypeScript
 - Validation / contracts: Zod
 - Web app: TanStack Start + TanStack Router + TanStack Query
@@ -40,8 +40,8 @@ scratch/              Disposable workbench area for experiments
 ## Local development
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
 Open the workbench at `http://localhost:3000`.
@@ -49,7 +49,7 @@ Open the workbench at `http://localhost:3000`.
 ## CLI usage
 
 ```bash
-pnpm --filter @tsforge/cli exec bun src/bin.ts /path/to/template-or-directory [output_dir]
+bun run apps/cli/src/bin.ts /path/to/template-or-directory [output_dir]
 ```
 
 The CLI preserves the original behavior:
@@ -67,9 +67,9 @@ Create a `.env` from `.env.example`.
 ## Verification
 
 ```bash
-pnpm test
-pnpm check
-pnpm build
+bun run test
+bun run check
+bun run build
 ```
 
 ## License
