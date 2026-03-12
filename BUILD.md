@@ -1,14 +1,15 @@
 # Build and verification notes
 
-This repo is now a Bun workspace built around Bun, TypeScript, and TanStack Start.
+`tsforge` is a Bun workspace for durable TypeScript scripts, supporting packages, and
+optional app surfaces.
 
-## Current package contract
+## Workspace contract
 
-- `packages/converter` owns the `.emltpl` to `.oft` binary conversion logic.
-- `apps/cli` stays thin and preserves the original single-file / directory workflow.
-- `apps/web` is the full-stack workbench for uploads, auth, and conversion history.
-- Shared payloads must flow through `packages/contracts`.
-- Drizzle schema and migrations live in `packages/db`.
+- `scripts/*` contains standalone CLIs and script-sized utilities
+- `packages/*` contains shared code used by one or more scripts/apps
+- `apps/*` contains interfaces or services layered on top of packages/scripts
+- `scratch/` is intentionally disposable and does not define the repo's structure
+- `luts/` is shared asset storage for video-related scripts
 
 ## Current verification commands
 
@@ -21,12 +22,12 @@ bun run db:generate
 
 ## Runtime expectations
 
-- Bun runs the workspace scripts and the CLI entrypoint.
-- `DATABASE_URL` and `BETTER_AUTH_SECRET` are required for Better Auth and Drizzle-backed
-  history.
+- Bun runs the workspace scripts and CLI entrypoints
+- `ffmpeg` and `ffprobe` are required for `scripts/batch-grade`
+- `DATABASE_URL` and `BETTER_AUTH_SECRET` are required only for `apps/web`
 
-## Current concrete utility
+## Current shared core
 
-- The converter still builds OLE2 / CFB and MAPI data directly.
-- The TypeScript port preserves the tested codepage, attachment, and large-FAT behavior from
-  the original Python implementation.
+- `packages/converter` still builds OLE2 / CFB and MAPI data directly
+- The email template conversion port preserves the tested codepage, attachment, and
+  large-FAT behavior from the original Python implementation

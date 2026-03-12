@@ -1,0 +1,12 @@
+{
+  "name": "@tsforge/batch-grade",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "tsforge-batch-grade": "./src/bin.ts"
+  },
+  "scripts": {
+    "start": "bun run ./src/bin.ts",
+    "typecheck": "bun --bun tsc -p tsconfig.json --noEmit"
+  }
+}

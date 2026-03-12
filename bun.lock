@@ -7,17 +7,9 @@
       "devDependencies": {
         "@biomejs/biome": "2.4.6",
         "@types/node": "^24.5.2",
+        "bun-types": "1.3.10",
         "typescript": "^5.9.2",
         "vitest": "4.0.18",
-      },
-    },
-    "apps/cli": {
-      "name": "@tsforge/cli",
-      "bin": {
-        "tsforge": "./src/bin.ts",
-      },
-      "dependencies": {
-        "@tsforge/converter": "workspace:*",
       },
     },
     "apps/web": {
@@ -83,6 +75,21 @@
         "@opentelemetry/sdk-node": "^0.208.0",
         "@opentelemetry/sdk-trace-base": "^2.2.0",
         "@opentelemetry/semantic-conventions": "^1.37.0",
+      },
+    },
+    "scripts/batch-grade": {
+      "name": "@tsforge/batch-grade",
+      "bin": {
+        "tsforge-batch-grade": "./src/bin.ts",
+      },
+    },
+    "scripts/email-template-converter": {
+      "name": "@tsforge/email-template-converter",
+      "bin": {
+        "tsforge": "./src/bin.ts",
+      },
+      "dependencies": {
+        "@tsforge/converter": "workspace:*",
       },
     },
   },
@@ -484,13 +491,15 @@
 
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.161.4", "", {}, "sha512-42WoRePf8v690qG8yGRe/YOh+oHni9vUaUUfoqlS91U2scd3a5rkLtVsc6b7z60w3RogH0I00vdrC5AaeiZ18w=="],
 
-    "@tsforge/cli": ["@tsforge/cli@workspace:apps/cli"],
+    "@tsforge/batch-grade": ["@tsforge/batch-grade@workspace:scripts/batch-grade"],
 
     "@tsforge/contracts": ["@tsforge/contracts@workspace:packages/contracts"],
 
     "@tsforge/converter": ["@tsforge/converter@workspace:packages/converter"],
 
     "@tsforge/db": ["@tsforge/db@workspace:packages/db"],
+
+    "@tsforge/email-template-converter": ["@tsforge/email-template-converter@workspace:scripts/email-template-converter"],
 
     "@tsforge/observability": ["@tsforge/observability@workspace:packages/observability"],
 
@@ -575,6 +584,8 @@
     "bson": ["bson@7.2.0", "", {}, "sha512-YCEo7KjMlbNlyHhz7zAZNDpIpQbd+wOEHJYezv0nMYTn4x31eIUM2yomNNubclAt63dObUzKHWsBLJ9QcZNSnQ=="],
 
     "buffer-from": ["buffer-from@1.1.2", "", {}, "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="],
+
+    "bun-types": ["bun-types@1.3.10", "", { "dependencies": { "@types/node": "*" } }, "sha512-tcpfCCl6XWo6nCVnpcVrxQ+9AYN1iqMIzgrSKYMB/fjLtV2eyAVEg7AxQJuCq/26R6HpKWykQXuSOq/21RYcbg=="],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001778", "", {}, "sha512-PN7uxFL+ExFJO61aVmP1aIEG4i9whQd4eoSCebav62UwDyp5OHh06zN4jqKSMePVgxHifCw1QJxdRkA1Pisekg=="],
 

@@ -1,5 +1,5 @@
 {
-  "name": "@tsforge/cli",
+  "name": "@tsforge/email-template-converter",
   "private": true,
   "type": "module",
   "bin": {
@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "start": "bun run ./src/bin.ts",
     "typecheck": "bun --bun tsc -p tsconfig.json --noEmit",
     "test": "bun --bun vitest run"
   },
