@@ -1,0 +1,21 @@
+{
+  "name": "@tsforge/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "bun --bun tsc -p tsconfig.json --noEmit",
+    "db:generate": "bun --bun drizzle-kit generate --config drizzle.config.ts",
+    "db:migrate": "bun --bun drizzle-kit migrate --config drizzle.config.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.1",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.9"
+  }
+}

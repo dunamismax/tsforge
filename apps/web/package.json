@@ -1,0 +1,41 @@
+{
+  "name": "@tsforge/web",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "scripts": {
+    "dev": "bun --bun vite dev --port 3000",
+    "build": "bun --bun vite build",
+    "preview": "bun --bun vite preview",
+    "typecheck": "bun --bun tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.90.21",
+    "@tanstack/react-query-devtools": "5.90.2",
+    "@tanstack/react-router": "1.166.7",
+    "@tanstack/react-router-devtools": "1.166.7",
+    "@tanstack/react-router-ssr-query": "1.166.7",
+    "@tanstack/react-start": "1.166.8",
+    "@tanstack/router-plugin": "1.166.7",
+    "@tsforge/contracts": "workspace:*",
+    "@tsforge/converter": "workspace:*",
+    "@tsforge/db": "workspace:*",
+    "@tsforge/observability": "workspace:*",
+    "better-auth": "1.5.5",
+    "drizzle-orm": "0.45.1",
+    "nitro": "npm:nitro-nightly@latest",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tanstack/devtools-vite": "0.5.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "tsforge",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "bun": ">=1.3.10",
+    "node": ">=24.13.1",
+    "pnpm": ">=10.30.3"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @tsforge/web dev",
+    "dev:web": "pnpm --filter @tsforge/web dev",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check . && pnpm typecheck",
+    "db:generate": "pnpm --filter @tsforge/db db:generate",
+    "db:migrate": "pnpm --filter @tsforge/db db:migrate"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.6",
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2",
+    "vitest": "4.0.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

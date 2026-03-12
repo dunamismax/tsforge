@@ -1,17 +1,24 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.egg-info/
+node_modules/
+.pnpm-store/
 dist/
 build/
-.eggs/
+.turbo/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+__unconfig*
+coverage/
+*.log
+*.local
 
-# Virtual environments
-.venv/
-venv/
-env/
+# Bun
+bun.lockb
+
+# Environment
+.env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
@@ -23,8 +30,3 @@ env/
 # OS
 .DS_Store
 Thumbs.db
-
-# Tool caches
-.ruff_cache/
-.mypy_cache/
-.pytest_cache/

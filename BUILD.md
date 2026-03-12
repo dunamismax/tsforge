@@ -1,25 +1,32 @@
 # Build and verification notes
 
-This repo is being kept as a durable Python tooling repo, not a one-off converter dump.
+This repo is now a pnpm workspace built around Bun, TypeScript, and TanStack Start.
 
 ## Current package contract
 
-- Reusable code lives under `pyforge/`.
-- Stable runnable entrypoints stay in `tools/`.
-- `lib/` remains only as a local compatibility shim for older imports.
-- The package entrypoint is `python -m pyforge.emltpl_to_oft`.
+- `packages/converter` owns the `.emltpl` to `.oft` binary conversion logic.
+- `apps/cli` stays thin and preserves the original single-file / directory workflow.
+- `apps/web` is the full-stack workbench for uploads, auth, and conversion history.
+- Shared payloads must flow through `packages/contracts`.
+- Drizzle schema and migrations live in `packages/db`.
 
 ## Current verification commands
 
 ```bash
-UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .
-UV_CACHE_DIR=/tmp/uv-cache uv run ruff format --check .
-UV_CACHE_DIR=/tmp/uv-cache uv run python -m unittest discover -s tests
-UV_CACHE_DIR=/tmp/uv-cache uv run python tools/emltpl_to_oft.py <input.emltpl> <output_dir>
+pnpm test
+pnpm check
+pnpm build
+pnpm --filter @tsforge/db db:generate
 ```
+
+## Runtime expectations
+
+- Bun runs the workspace scripts and the CLI entrypoint.
+- `DATABASE_URL` and `BETTER_AUTH_SECRET` are required for Better Auth and Drizzle-backed
+  history.
 
 ## Current concrete utility
 
-- `emltpl_to_oft` converts macOS `.emltpl` templates into Outlook `.oft`.
-- The converter remains stdlib-only and builds CFB/MAPI data directly.
-- Parser, CLI, CFB, and MAPI concerns are intentionally split so future tools can share implementation patterns without importing a monolithic script.
+- The converter still builds OLE2 / CFB and MAPI data directly.
+- The TypeScript port preserves the tested codepage, attachment, and large-FAT behavior from
+  the original Python implementation.

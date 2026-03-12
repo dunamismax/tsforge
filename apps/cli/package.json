@@ -1,0 +1,18 @@
+{
+  "name": "@tsforge/cli",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "tsforge": "./src/bin.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun --bun tsc -p tsconfig.json --noEmit",
+    "test": "bun --bun vitest run"
+  },
+  "dependencies": {
+    "@tsforge/converter": "workspace:*"
+  }
+}

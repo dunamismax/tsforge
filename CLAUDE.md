@@ -9,10 +9,10 @@ Do not duplicate agent instructions here. Read the canonical files.
 
 ## Repo-Specific
 
-- **Language:** Python only. No TypeScript, no shell scripts.
-- **Style:** `ruff` for linting and formatting. Run `ruff check .` and `ruff format .` before committing.
-- **Structure:** Reusable scripts in `tools/`. Experiments and one-offs in `scratch/`. Shared code in `lib/`.
-- **Scripts must be standalone.** Each script in `tools/` should be directly runnable with `uv run python tools/<name>.py`. Import from `lib/` only when genuinely shared logic exists.
-- **No unnecessary dependencies.** Prefer stdlib. When a third-party dep is needed, document it in the script's docstring and in the README.
-- **Docstrings required.** Every script needs a module docstring with purpose, usage, and dependency info.
-- **Git:** No AI attribution. Commit as dunamismax. Force-push to main (dual remotes).
+- **Language:** TypeScript first. Bun runtime, pnpm workspace.
+- **Structure:** Shared logic belongs in `packages/`. Product surfaces belong in `apps/`. `scratch/` is still disposable.
+- **Core split:** Keep binary conversion behavior in `packages/converter`, not inside the web app.
+- **Validation:** Use Zod for cross-boundary contracts.
+- **Quality bar:** Run `pnpm check`, `pnpm test`, and `pnpm build` before landing non-trivial changes.
+- **Infra assumptions:** Better Auth and Drizzle should degrade cleanly when env is missing instead of crashing unrelated converter flows.
+- **Git:** No AI attribution. Commit as dunamismax.

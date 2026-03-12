@@ -1,57 +1,76 @@
-# pyforge
+# tsforge
 
-`pyforge` is a small Python tooling repo intended to grow over time.
+`tsforge` is a Bun-first TypeScript monorepo for converting macOS `.emltpl` email
+templates into Outlook `.oft` files, with a TanStack Start workbench layered on top of
+the converter core.
 
-It is not a general-purpose framework, and it is not limited to one email conversion workflow either. The repo houses durable Python utilities, the reusable library code behind them, and a scratch area for one-off experiments that have not earned a permanent place yet.
+## Stack
 
-## Current scope
+- Runtime: Bun
+- Package manager / workspace: pnpm
+- Language: TypeScript
+- Validation / contracts: Zod
+- Web app: TanStack Start + TanStack Router + TanStack Query
+- Database: PostgreSQL + Drizzle ORM
+- Auth: Better Auth
+- Observability: OpenTelemetry
+- Lint / format: Biome
+- Tests: Vitest
 
-Today the repo contains one production utility:
-
-- `tools/emltpl_to_oft.py`: converts macOS `.emltpl` email templates to Windows Outlook `.oft` files.
-
-The converter builds OLE2 Compound File Binary data directly and stays stdlib-only. Its reusable implementation lives under the `pyforge/` package so future tools can share code without turning the repo into a pile of standalone scripts.
-
-## Layout
+## Workspace layout
 
 ```text
-pyforge/    Reusable Python package code used by durable tools
-tools/      Stable runnable entrypoints
-tests/      Regression tests for reusable behavior and tool workflows
-scratch/    Temporary experiments and one-offs
-lib/        Legacy compatibility shim for older local imports
+apps/web/             TanStack Start workbench for uploads, auth, and history
+apps/cli/             Bun CLI for single-file and directory conversion
+packages/contracts/   Shared Zod contracts used across app and CLI
+packages/converter/   TypeScript port of the CFB/MAPI/OFT converter core
+packages/db/          Drizzle schema, client, and migrations
+packages/observability/ OpenTelemetry bootstrap and span helpers
+scratch/              Disposable workbench area for experiments
 ```
 
-## Running the current tool
+## What changed from `pyforge`
 
-The existing in-repo entrypoint remains:
+- The Python package and compatibility shims are gone.
+- The `.emltpl` to `.oft` conversion logic was ported into `@tsforge/converter`.
+- CLI parity was preserved in `apps/cli`.
+- A new TanStack Start app now exposes the converter with Better Auth-backed history and
+  Drizzle persistence.
+
+## Local development
 
 ```bash
-uv run python tools/emltpl_to_oft.py /path/to/template-or-directory [output_dir]
+pnpm install
+pnpm dev
 ```
 
-The package code is also directly runnable:
+Open the workbench at `http://localhost:3000`.
+
+## CLI usage
 
 ```bash
-uv run python -m pyforge.emltpl_to_oft /path/to/template-or-directory [output_dir]
+pnpm --filter @tsforge/cli exec bun src/bin.ts /path/to/template-or-directory [output_dir]
 ```
 
-## Development
+The CLI preserves the original behavior:
 
-Requires Python 3.12+.
+- A single `.emltpl` writes an `.oft` next to the source file unless `output_dir` is provided.
+- A directory input converts all top-level `*.emltpl` files in sorted order.
+
+## Environment
+
+Create a `.env` from `.env.example`.
+
+- `DATABASE_URL` and `BETTER_AUTH_SECRET` are required for auth and persisted history.
+- The converter itself and the CLI work without database credentials.
+
+## Verification
 
 ```bash
-UV_CACHE_DIR=/tmp/uv-cache uv run ruff check .
-UV_CACHE_DIR=/tmp/uv-cache uv run ruff format --check .
-UV_CACHE_DIR=/tmp/uv-cache uv run python -m unittest discover -s tests
+pnpm test
+pnpm check
+pnpm build
 ```
-
-## Working standard
-
-- Put reusable implementation in `pyforge/`.
-- Keep `tools/` thin and runnable.
-- Treat `scratch/` as disposable until code proves it should move up.
-- Add or extend tests when behavior becomes part of the repo contract.
 
 ## License
 
