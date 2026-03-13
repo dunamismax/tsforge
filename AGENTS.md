@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Agent instructions for this repo live in the canonical grimoire config:
 
