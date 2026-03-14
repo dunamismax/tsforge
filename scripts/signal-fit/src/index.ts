@@ -1,4 +1,4 @@
-import { closeSync, constants, createReadStream, createWriteStream, openSync } from 'node:fs'
+import { constants, createReadStream, createWriteStream } from 'node:fs'
 import { access, mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -300,49 +300,19 @@ function openPromptTerminal(): PromptTerminal {
     }
   }
 
-  let inputFd: number | null = null
-  let outputFd: number | null = null
-
   try {
-    inputFd = openSync(terminalDevicePath('input'), 'r')
-    outputFd = openSync(terminalDevicePath('output'), 'w')
-
-    const terminalInput = createReadStream(terminalDevicePath('input'), {
-      autoClose: false,
-      fd: inputFd,
-    })
-    const terminalOutput = createWriteStream(terminalDevicePath('output'), {
-      autoClose: false,
-      fd: outputFd,
-    })
+    const terminalInput = createReadStream(terminalDevicePath('input'))
+    const terminalOutput = createWriteStream(terminalDevicePath('output'))
 
     return {
       close() {
         terminalInput.destroy()
         terminalOutput.destroy()
-
-        if (inputFd !== null) {
-          closeSync(inputFd)
-          inputFd = null
-        }
-
-        if (outputFd !== null) {
-          closeSync(outputFd)
-          outputFd = null
-        }
       },
       input: terminalInput,
       output: terminalOutput,
     }
   } catch {
-    if (inputFd !== null) {
-      closeSync(inputFd)
-    }
-
-    if (outputFd !== null) {
-      closeSync(outputFd)
-    }
-
     throw new Error('A video file path is required when no interactive terminal is available.')
   }
 }
