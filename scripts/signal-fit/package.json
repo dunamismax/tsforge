@@ -1,0 +1,16 @@
+{
+  "name": "@tsforge/signal-fit",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "tsforge-signal-fit": "./src/bin.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run ./src/bin.ts",
+    "typecheck": "bun --bun tsc -p tsconfig.json --noEmit",
+    "test": "bun --bun vitest run"
+  }
+}

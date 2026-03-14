@@ -14,3 +14,4 @@ Durable TypeScript scripts and CLI-sized tools live here.
 
 - `email-template-converter/`
 - `batch-grade/`
+- `signal-fit/`
