@@ -92,6 +92,12 @@
         "@tsforge/converter": "workspace:*",
       },
     },
+    "scripts/signal-fit": {
+      "name": "@tsforge/signal-fit",
+      "bin": {
+        "tsforge-signal-fit": "./src/bin.ts",
+      },
+    },
   },
   "trustedDependencies": [
     "esbuild",
@@ -502,6 +508,8 @@
     "@tsforge/email-template-converter": ["@tsforge/email-template-converter@workspace:scripts/email-template-converter"],
 
     "@tsforge/observability": ["@tsforge/observability@workspace:packages/observability"],
+
+    "@tsforge/signal-fit": ["@tsforge/signal-fit@workspace:scripts/signal-fit"],
 
     "@tsforge/web": ["@tsforge/web@workspace:apps/web"],
 

@@ -1,4 +1,4 @@
-import { constants } from 'node:fs'
+import { closeSync, constants, createReadStream, createWriteStream, openSync } from 'node:fs'
 import { access, mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -75,6 +75,12 @@ type MainOptions = {
   inputFile?: string
   limitBytes: number
   overwrite: boolean
+}
+
+type PromptTerminal = {
+  close(): void
+  input: NodeJS.ReadableStream
+  output: NodeJS.WritableStream
 }
 
 const defaultIo: CliIo = {
@@ -277,6 +283,74 @@ function preferredAudioCodec(support: EncoderSupport) {
   return null
 }
 
+function terminalDevicePath(kind: 'input' | 'output') {
+  if (process.platform === 'win32') {
+    return kind === 'input' ? 'CONIN$' : 'CONOUT$'
+  }
+
+  return '/dev/tty'
+}
+
+function openPromptTerminal(): PromptTerminal {
+  if (input.isTTY && output.isTTY) {
+    return {
+      close() {},
+      input,
+      output,
+    }
+  }
+
+  let inputFd: number | null = null
+  let outputFd: number | null = null
+
+  try {
+    inputFd = openSync(terminalDevicePath('input'), 'r')
+    outputFd = openSync(terminalDevicePath('output'), 'w')
+
+    const terminalInput = createReadStream(terminalDevicePath('input'), {
+      autoClose: false,
+      fd: inputFd,
+    })
+    const terminalOutput = createWriteStream(terminalDevicePath('output'), {
+      autoClose: false,
+      fd: outputFd,
+    })
+
+    return {
+      close() {
+        terminalInput.destroy()
+        terminalOutput.destroy()
+
+        if (inputFd !== null) {
+          closeSync(inputFd)
+          inputFd = null
+        }
+
+        if (outputFd !== null) {
+          closeSync(outputFd)
+          outputFd = null
+        }
+      },
+      input: terminalInput,
+      output: terminalOutput,
+    }
+  } catch {
+    if (inputFd !== null) {
+      closeSync(inputFd)
+    }
+
+    if (outputFd !== null) {
+      closeSync(outputFd)
+    }
+
+    throw new Error('A video file path is required when no interactive terminal is available.')
+  }
+}
+
+function writeTerminalLine(terminal: PromptTerminal, message: string) {
+  terminal.output.write(`${message}\n`)
+}
+
 function probeMedia(sourceFile: string, sizeBytes: number): MediaProbe {
   const result = Bun.spawnSync({
     cmd: [
@@ -410,18 +484,18 @@ async function findExistingInput(rawPath: string) {
   return path.resolve(expandHome(unescapeDraggedPath(sanitizePath(rawPath))))
 }
 
-async function promptForInputFile(io: CliIo) {
-  if (!(input.isTTY && output.isTTY)) {
-    throw new Error('A video file path is required when stdin is not interactive.')
-  }
-
-  const rl = createInterface({ input, output })
+async function promptForInputFile() {
+  const terminal = openPromptTerminal()
+  const rl = createInterface({
+    input: terminal.input,
+    output: terminal.output,
+  })
 
   try {
-    io.writeLine('Signal Video Fit')
-    io.writeLine('')
-    io.writeLine('Drag a video file into this window and press Enter.')
-    io.writeLine('')
+    writeTerminalLine(terminal, 'Signal Video Fit')
+    writeTerminalLine(terminal, '')
+    writeTerminalLine(terminal, 'Drag a video file into this window and press Enter.')
+    writeTerminalLine(terminal, '')
 
     while (true) {
       const answer = await rl.question('Video file: ')
@@ -431,10 +505,11 @@ async function promptForInputFile(io: CliIo) {
         return candidate
       }
 
-      io.writeLine(`File not found: ${candidate}`)
+      writeTerminalLine(terminal, `File not found: ${candidate}`)
     }
   } finally {
     rl.close()
+    terminal.close()
   }
 }
 
@@ -666,7 +741,7 @@ async function runWithOptions(options: MainOptions, io: CliIo) {
 
   const sourceFile = options.inputFile
     ? await findExistingInput(options.inputFile)
-    : await promptForInputFile(io)
+    : await promptForInputFile()
 
   if (!(await isFile(sourceFile))) {
     throw new Error(`Video file not found: ${sourceFile}`)
